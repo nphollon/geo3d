@@ -150,10 +150,11 @@ cross u v =
         ((getX u * getY v) - (getY u * getX v))
 
 
-{-| Return the unit vector that points in the same direction as the given vector
+{-| Return the unit vector that points in the same direction as the given vector. Return Nothing if given the zero vector.
 
-    normalize (vector 0 3 0) == vector 0 1 0
-    normalize (vector 1 1 1) == scale (1/sqrt 3) (vector 1 1 1)
+    normalize (vector 0 3 0) == Just (vector 0 1 0)
+    normalize (vector 0 0 0) == Nothing
+    normalize (vector 1 1 1) == Just (scale (1/sqrt 3) (vector 1 1 1))
 -}
 normalize : Vector -> Maybe Vector
 normalize v =
@@ -163,9 +164,9 @@ normalize v =
         Just (scale (1 / length v) v)
 
 
-{-| Return the unit vector that points from the second vector to the first vector.
+{-| Return the unit vector that points from the second vector to the first vector. Return Nothing if the vectors are the same.
 
-    direction (vector 1 1 0) (vector -1 1 0) == (vector 1 0 0)
+    direction (vector 1 1 0) (vector -1 1 0) == Just (vector 1 0 0)
     direction a b == normalize (a `sub` b)
 -}
 direction : Vector -> Vector -> Maybe Vector
@@ -235,7 +236,7 @@ toTuple v =
     ( getX v, getY v, getZ v )
 
 
-{-| Convert a vector into a [Json Value](http://package.elm-lang.org/packages/elm-lang/core/4.0.5/Json-Encode).
+{-| Convert a vector into a [Json Value](http://package.elm-lang.org/packages/elm-lang/core/latest/Json-Encode).
 -}
 encode : Vector -> Value
 encode v =
@@ -246,21 +247,21 @@ encode v =
         ]
 
 
-{-| A [Json Decoder](http://package.elm-lang.org/packages/elm-lang/core/4.0.5/Json-Decode) for vectors encoded with `encode`.
+{-| A [Json Decoder](http://package.elm-lang.org/packages/elm-lang/core/latest/Json-Decode) for vectors encoded with `encode`.
 -}
 decode : Decoder Vector
 decode =
     Decode.tuple3 vector Decode.float Decode.float Decode.float
 
 
-{-| Convert from an [elm-linear-algebra Vec3](http://package.elm-lang.org/packages/elm-community/elm-linear-algebra/2.0.3/Math-Vector3)
+{-| Convert from an [elm-linear-algebra Vec3](http://package.elm-lang.org/packages/elm-community/elm-linear-algebra/latest)
 -}
 fromVec3 : Vec3 -> Vector
 fromVec3 =
     Vec3.toRecord
 
 
-{-| Convert to an [elm-linear-algebra Vec3](http://package.elm-lang.org/packages/elm-community/elm-linear-algebra/2.0.3/Math-Vector3)
+{-| Convert to an [elm-linear-algebra Vec3](http://package.elm-lang.org/packages/elm-community/elm-linear-algebra/latest)
 -}
 toVec3 : Vector -> Vec3
 toVec3 =
