@@ -1,6 +1,18 @@
-module Quaternion exposing (Quaternion, toVector, fromVector, fromBasis, fromAxisAngle, compose, rotateVector, rotationFor, quaternion, conjugate, encode, decode, scale, identity, negate, toMat4, rotateX, rotateY, rotateZ)
+module Quaternion exposing (Quaternion, toVector, fromVector, fromAxisAngle, compose, rotateVector, rotationFor, quaternion, conjugate, encode, decode, identity, toMat4, rotateX, rotateY, rotateZ)
 
 {-| A quaternion type. Used for rotations in three dimensions.
+
+# Building
+
+@docs Quaternion, quaternion, identity, rotationFor, rotateX, rotateY, rotateZ, fromAxisAngle, fromVector, toVector
+
+# Using
+
+@docs compose, conjugate, rotateVector
+
+# Interop
+
+@docs encode, decode, toMat4
 -}
 
 import Json.Encode as Encode exposing (Value)
@@ -9,12 +21,16 @@ import Vector exposing (Vector)
 import Math.Matrix4 as Mat4 exposing (Mat4)
 
 
+{-| Quaternion is a combination of a 3-vector and a scalar.
+-}
 type alias Quaternion =
     { vector : Vector
     , scalar : Float
     }
 
 
+{-| Convert to a [Json Value](http://package.elm-lang.org/packages/elm-lang/core/4.0.5/Json-Encode).
+-}
 encode : Quaternion -> Value
 encode q =
     Encode.list
@@ -25,6 +41,8 @@ encode q =
         ]
 
 
+{-| A [Json Decoder](http://package.elm-lang.org/packages/elm-lang/core/4.0.5/Json-Decode) for vectors encoded with `encode`.
+-}
 decode : Decoder Quaternion
 decode =
     Decode.tuple4 quaternion
@@ -34,6 +52,8 @@ decode =
         Decode.float
 
 
+{-| Construct a quaternion given its four components. The first argument is the scalar component, the rest are the vector components.
+-}
 quaternion : Float -> Float -> Float -> Float -> Quaternion
 quaternion w x y z =
     { vector = Vector.vector x y z
@@ -41,31 +61,50 @@ quaternion w x y z =
     }
 
 
+{-| The identity quaternion corresponds to no rotation.
+
+    identity == quaternion 1 0 0 0
+-}
 identity : Quaternion
 identity =
     quaternion 1 0 0 0
 
 
+{-| Create a quaternion corresponding to a rotation about the x axis by the given angle. Rotation is counter-clockwise.
+
+    q = rotateX (degrees 90)
+    v = vector 0 1 0 -- y axis
+
+    rotateVector q v == vector 0 0 1 -- rotated into z axis
+-}
 rotateX : Float -> Quaternion
 rotateX angle =
     quaternion (cos (0.5 * angle)) (sin (0.5 * angle)) 0 0
 
 
+{-| Create a quaternion corresponding to a rotation about the y axis by the given angle.
+-}
 rotateY : Float -> Quaternion
 rotateY angle =
     quaternion (cos (0.5 * angle)) 0 (sin (0.5 * angle)) 0
 
 
+{-| Create a quaternion corresponding to a rotation about the z axis by the given angle.
+-}
 rotateZ : Float -> Quaternion
 rotateZ angle =
     quaternion (cos (0.5 * angle)) 0 0 (sin (0.5 * angle))
 
 
-negate : Quaternion -> Quaternion
-negate q =
+{-| The conjugate of a quaternion.
+-}
+conjugate : Quaternion -> Quaternion
+conjugate q =
     { q | vector = Vector.negate q.vector }
 
 
+{-| Multiply two quaternions.
+-}
 compose : Quaternion -> Quaternion -> Quaternion
 compose p q =
     { vector =
@@ -77,23 +116,28 @@ compose p q =
     }
 
 
+{-| Get the angle of rotation for a quaternion.
+
+    angle (rotateY 0.2) == 0.2
+-}
 angle : Quaternion -> Float
 angle q =
     2 * acos q.scalar
 
 
+{-| Get the axis of rotation for a quaternion. Defaults to the x axis if there is no rotation.
+
+    axis (rotateY 0.2) == vector 0 1 0
+    axis identity == vector 1 0 0
+-}
 axis : Quaternion -> Vector
 axis q =
     Vector.normalize q.vector
         |> Maybe.withDefault (Vector.vector 1 0 0)
 
 
-scale : Float -> Quaternion -> Quaternion
-scale n q =
-    fromAxisAngle (axis q) (n * angle q)
-        |> Maybe.withDefault q
-
-
+{-| Rotate a vector by a quaternion.
+-}
 rotateVector : Quaternion -> Vector -> Vector
 rotateVector q v =
     let
@@ -105,8 +149,16 @@ rotateVector q v =
         compose vectorQuat q
             |> compose (conjugate q)
             |> .vector
+            |> Vector.scale (1 / quadrance q)
 
 
+quadrance : Quaternion -> Float
+quadrance q =
+    q.scalar ^ 2 + (Vector.lengthSquared q.vector)
+
+
+{-| Given two vectors, return the quaternion that would rotate the first vector to the second vector. The lengths of the vectors are ignored. If one or both vectors are zero, return the identity quaternion.
+-}
 rotationFor : Vector -> Vector -> Quaternion
 rotationFor u v =
     let
@@ -130,13 +182,8 @@ rotationFor u v =
                 |> fromVector
 
 
-conjugate : Quaternion -> Quaternion
-conjugate q =
-    { vector = Vector.negate q.vector
-    , scalar = q.scalar
-    }
-
-
+{-| Convert a rotation vector to a quaternion. A rotation vector's direction is the axis of rotation, and its length is the angle of rotation.
+-}
 fromVector : Vector -> Quaternion
 fromVector v =
     let
@@ -147,6 +194,8 @@ fromVector v =
             |> Maybe.withDefault (quaternion 1 0 0 0)
 
 
+{-| Create a quaternion given an axis and angle of rotation. The length of the axis is ignored, but returns Nothing if the axis is the zero vector.
+-}
 fromAxisAngle : Vector -> Float -> Maybe Quaternion
 fromAxisAngle axis angle =
     Vector.normalize axis
@@ -158,6 +207,8 @@ fromAxisAngle axis angle =
             )
 
 
+{-| Convert a quaternion to a rotation vector.
+-}
 toVector : Quaternion -> Vector
 toVector q =
     let
@@ -170,87 +221,8 @@ toVector q =
             Vector.scale (2 * acos q.scalar / halfSin) q.vector
 
 
+{-| Convert to an [elm-linear-algebra Mat4](http://package.elm-lang.org/packages/elm-community/elm-linear-algebra/latest)
+-}
 toMat4 : Quaternion -> Mat4
 toMat4 q =
     Mat4.makeRotate (angle q) (Vector.toVec3 (axis q))
-
-
-type alias Basis =
-    { x : Vector
-    , y : Vector
-    , z : Vector
-    }
-
-
-fromBasis : Basis -> Quaternion
-fromBasis basis =
-    let
-        diagX =
-            Vector.getX basis.x
-
-        diagY =
-            Vector.getY basis.y
-
-        diagZ =
-            Vector.getZ basis.z
-
-        pairXY =
-            ( Vector.getX basis.y, Vector.getY basis.x )
-
-        pairYZ =
-            ( Vector.getY basis.z, Vector.getZ basis.y )
-
-        pairZX =
-            ( Vector.getZ basis.x, Vector.getX basis.z )
-
-        trace =
-            diagX + diagY + diagZ
-
-        maxDiag =
-            max (max diagX diagY) diagZ
-
-        normalAdd denominator pair =
-            (uncurry (+) pair) / denominator
-
-        normalSub denominator pair =
-            (uncurry (-) pair) / denominator
-
-        doubleSqrt =
-            max 0 >> sqrt >> (*) 2
-    in
-        if trace > 0 then
-            let
-                s =
-                    doubleSqrt (trace + 1)
-            in
-                quaternion (s / 4)
-                    (normalSub s pairYZ)
-                    (normalSub s pairZX)
-                    (normalSub s pairXY)
-        else if maxDiag == diagX then
-            let
-                s =
-                    doubleSqrt (1 + diagX - diagY - diagZ)
-            in
-                quaternion (normalSub s pairYZ)
-                    (s / 4)
-                    (normalAdd s pairXY)
-                    (normalAdd s pairZX)
-        else if maxDiag == diagY then
-            let
-                s =
-                    doubleSqrt (1 - diagX + diagY - diagZ)
-            in
-                quaternion (normalSub s pairZX)
-                    (normalAdd s pairXY)
-                    (s / 4)
-                    (normalAdd s pairYZ)
-        else
-            let
-                s =
-                    doubleSqrt (1 - diagX - diagY + diagZ)
-            in
-                quaternion (normalSub s pairXY)
-                    (normalAdd s pairZX)
-                    (normalAdd s pairYZ)
-                    (s / 4)
