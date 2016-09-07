@@ -1,7 +1,7 @@
 {
     "version": "1.0.0",
     "summary": "Vectors and Quaternions for 3D Geometry",
-    "repository": "https://github.com/user/project.git",
+    "repository": "https://github.com/nphollon/geo3d.git",
     "license": "Apache2.0",
     "source-directories": [
         "src"
