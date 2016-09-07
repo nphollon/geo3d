@@ -4,9 +4,9 @@ module Quaternion exposing (Quaternion, toVector, fromVector, fromAxisAngle, com
 
 # Building
 
-@docs Quaternion, quaternion, identity, rotationFor, rotateX, rotateY, rotateZ, fromAxisAngle, fromVector, toVector
+@docs Quaternion, quaternion, identity, rotateX, rotateY, rotateZ, rotationFor, fromAxisAngle, fromVector, toVector
 
-# Using
+# Transforming
 
 @docs compose, conjugate, rotateVector
 
