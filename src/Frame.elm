@@ -1,4 +1,4 @@
-module Frame exposing (Frame, identity, transformInto, transformOutOf, toMat4, compose, setPosition, setOrientation, intrinsicNudge, intrinsicRotate, extrinsicNudge, extrinsicRotate, encode, decode)
+module Frame exposing (Frame, identity, transformInto, transformOutOf, toMat4, inverse, compose, setPosition, setOrientation, intrinsicNudge, intrinsicRotate, extrinsicNudge, extrinsicRotate, encode, decode)
 
 {-| A Frame describes the difference between two coordinate systems -- the position and orientation of one reference frame relative to another.
 
@@ -6,7 +6,7 @@ module Frame exposing (Frame, identity, transformInto, transformOutOf, toMat4, c
 @docs Frame, identity
 
 # Changing Frames
-@docs setPosition, intrinsicNudge, extrinsicNudge, setOrientation, intrinsicRotate, extrinsicRotate, transformInto, transformOutOf, compose
+@docs setPosition, intrinsicNudge, extrinsicNudge, setOrientation, intrinsicRotate, extrinsicRotate, transformInto, transformOutOf, inverse, compose
 
 # Interop
 @docs encode, decode, toMat4
@@ -67,6 +67,15 @@ compose : Frame -> Frame -> Frame
 compose parent child =
     { position = transformOutOf parent child.position
     , orientation = Quaternion.compose parent.orientation child.orientation
+    }
+
+
+{-| Given a frame A to B, return the frame B to A
+-}
+inverse : Frame -> Frame
+inverse frame =
+    { position = transformInto frame Vector.zero
+    , orientation = Quaternion.conjugate frame.orientation
     }
 
 
