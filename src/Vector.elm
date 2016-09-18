@@ -210,8 +210,11 @@ distanceSquared u v =
 equal : Vector -> Vector -> Bool
 equal u v =
     let
+        threshold =
+            max 1 (lengthSquared u) * 1.0e-10
+
         equalFloat p q =
-            (p - q) ^ 2 < 1.0e-10
+            (p - q) ^ 2 < threshold
     in
         (equalFloat (getX u) (getX v))
             && (equalFloat (getY u) (getY v))

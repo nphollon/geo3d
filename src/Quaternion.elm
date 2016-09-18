@@ -1,4 +1,4 @@
-module Quaternion exposing (Quaternion, toVector, fromVector, fromAxisAngle, compose, rotateVector, rotationFor, quaternion, conjugate, encode, decode, identity, toMat4, rotateX, rotateY, rotateZ)
+module Quaternion exposing (Quaternion, toVector, fromVector, fromAxisAngle, getX, getY, getZ, getW, equal, add, mul, compose, rotateVector, rotationFor, quaternion, conjugate, lengthSquared, length, encode, decode, identity, toMat4, rotateX, rotateY, rotateZ)
 
 {-| A quaternion type. Used for rotations in three dimensions.
 
@@ -27,6 +27,51 @@ type alias Quaternion =
     { vector : Vector
     , scalar : Float
     }
+
+
+{-| Returns true when two quaternions are about equal.
+-}
+equal : Quaternion -> Quaternion -> Bool
+equal p q =
+    let
+        threshold =
+            max 1 (lengthSquared p) * 1.0e-10
+
+        aboutEqual x y =
+            (x - y) ^ 2 < threshold
+    in
+        (aboutEqual (getW p) (getW q))
+            && (aboutEqual (getX p) (getX q))
+            && (aboutEqual (getY p) (getY q))
+            && (aboutEqual (getZ p) (getZ q))
+
+
+{-| Get scalar component.
+-}
+getW : Quaternion -> Float
+getW q =
+    q.scalar
+
+
+{-| Get first vector component.
+-}
+getX : Quaternion -> Float
+getX q =
+    q.vector.x
+
+
+{-| Get second vector component.
+-}
+getY : Quaternion -> Float
+getY q =
+    q.vector.y
+
+
+{-| Get third vector component.
+-}
+getZ : Quaternion -> Float
+getZ q =
+    q.vector.z
 
 
 {-| Convert to a [Json Value](http://package.elm-lang.org/packages/elm-lang/core/4.0.5/Json-Encode).
@@ -103,17 +148,38 @@ conjugate q =
     { q | vector = Vector.negate q.vector }
 
 
+{-| Add two quaternions.
+
+If you are trying to combine rotations, you should to use `mul` or `compose` instead.
+-}
+add : Quaternion -> Quaternion -> Quaternion
+add p q =
+    { scalar = p.scalar + q.scalar
+    , vector = Vector.add p.vector q.vector
+    }
+
+
 {-| Multiply two quaternions.
 -}
-compose : Quaternion -> Quaternion -> Quaternion
-compose p q =
-    { vector =
+mul : Quaternion -> Quaternion -> Quaternion
+mul p q =
+    { scalar = q.scalar * p.scalar - (Vector.dot q.vector p.vector)
+    , vector =
         (Vector.scale q.scalar p.vector)
             `Vector.add` (Vector.scale p.scalar q.vector)
-            `Vector.add` (q.vector `Vector.cross` p.vector)
-    , scalar =
-        (q.scalar * p.scalar) - (q.vector `Vector.dot` p.vector)
+            `Vector.add` (Vector.cross p.vector q.vector)
     }
+
+
+{-| Multiplication with the operands flipped.
+
+This can make multiplication easier to use along with the pipe operators `|>` and `<|`
+
+    compose p q == mul q p
+-}
+compose : Quaternion -> Quaternion -> Quaternion
+compose =
+    flip mul
 
 
 {-| Get the angle of rotation for a quaternion.
@@ -137,24 +203,37 @@ axis q =
 
 
 {-| Rotate a vector by a quaternion.
+
+The quaternion does not have to be a unit quaternion. The vector length will be preserved.
+
+If given the zero quaternion, no rotation will be performed.
 -}
 rotateVector : Quaternion -> Vector -> Vector
 rotateVector q v =
     let
-        vectorQuat =
+        quadrance =
+            lengthSquared q
+    in
+        if quadrance == 0 then
+            v
+        else
             { vector = v
             , scalar = 0
             }
-    in
-        compose vectorQuat q
-            |> compose (conjugate q)
-            |> .vector
-            |> Vector.scale (1 / quadrance q)
+                |> mul q
+                |> compose (conjugate q)
+                |> .vector
+                |> Vector.scale (1 / quadrance)
 
 
-quadrance : Quaternion -> Float
-quadrance q =
+lengthSquared : Quaternion -> Float
+lengthSquared q =
     q.scalar ^ 2 + (Vector.lengthSquared q.vector)
+
+
+length : Quaternion -> Float
+length =
+    sqrt << lengthSquared
 
 
 {-| Given two vectors, return the quaternion that would rotate the first vector to the second vector. The lengths of the vectors are ignored. If one or both vectors are zero, return the identity quaternion.
