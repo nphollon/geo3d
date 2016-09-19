@@ -1,4 +1,4 @@
-module Frame exposing (Frame, identity, equal, transformInto, transformOutOf, toMat4, inverse, compose, setPosition, setOrientation, intrinsicNudge, intrinsicRotate, extrinsicNudge, extrinsicRotate, encode, decode)
+module Frame exposing (Frame, identity, equal, transformInto, transformOutOf, toMat4, inverse, mul, compose, setPosition, setOrientation, intrinsicNudge, intrinsicRotate, extrinsicNudge, extrinsicRotate, encode, decode)
 
 {-| A Frame describes the difference between two coordinate systems -- the position and orientation of one reference frame relative to another.
 
@@ -54,7 +54,7 @@ identity =
 -}
 transformInto : Frame -> Vector -> Vector
 transformInto frame point =
-    Quaternion.rotateVector frame.orientation
+    Quaternion.rotate frame.orientation
         (Vector.sub point frame.position)
 
 
@@ -63,19 +63,27 @@ transformInto frame point =
 transformOutOf : Frame -> Vector -> Vector
 transformOutOf frame point =
     Vector.add frame.position
-        (Quaternion.rotateVector
+        (Quaternion.rotate
             (Quaternion.conjugate frame.orientation)
             point
         )
 
 
 {-| Given a frame B to C, and another frame A to B, return the frame A to C.
+    transformInto (mul a b) vec == transformInto a (transformInto b vec)
 -}
-compose : Frame -> Frame -> Frame
-compose child parent =
+mul : Frame -> Frame -> Frame
+mul child parent =
     { position = transformOutOf parent child.position
     , orientation = Quaternion.mul child.orientation parent.orientation
     }
+
+
+{-| Given a frame A to B, and another frame B to C, return the frame A to C.
+-}
+compose : Frame -> Frame -> Frame
+compose =
+    flip mul
 
 
 {-| Given a frame A to B, return the frame B to A
@@ -84,7 +92,7 @@ inverse : Frame -> Frame
 inverse frame =
     { position =
         Vector.negate frame.position
-            |> Quaternion.rotateVector frame.orientation
+            |> Quaternion.rotate frame.orientation
     , orientation = Quaternion.conjugate frame.orientation
     }
 
@@ -103,7 +111,7 @@ intrinsicNudge delta frame =
     { frame
         | position =
             Vector.add frame.position
-                (Quaternion.rotateVector
+                (Quaternion.rotate
                     (Quaternion.conjugate frame.orientation)
                     delta
                 )
@@ -131,14 +139,14 @@ setOrientation newOrientation frame =
 -}
 intrinsicRotate : Quaternion -> Frame -> Frame
 intrinsicRotate delta frame =
-    { frame | orientation = Quaternion.compose delta frame.orientation }
+    { frame | orientation = Quaternion.mul frame.orientation delta }
 
 
 {-| Rotate a frame by a rotation defined outside the frame.
 -}
 extrinsicRotate : Quaternion -> Frame -> Frame
 extrinsicRotate delta frame =
-    { frame | orientation = Quaternion.compose frame.orientation delta }
+    { frame | orientation = Quaternion.mul delta frame.orientation }
 
 
 {-| Convert a frame into a [Json Value](http://package.elm-lang.org/packages/elm-lang/core/latest/Json-Encode).

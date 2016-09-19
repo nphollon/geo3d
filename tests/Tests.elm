@@ -8,6 +8,10 @@ import Quaternion as Q exposing (Quaternion)
 import Frame as F exposing (Frame)
 
 
+-- Test intrinsic/extrinsic rotate
+-- Quaternion equivalence
+
+
 all : Test
 all =
     describe "All Tests"
@@ -45,18 +49,30 @@ quaternionTests =
                 expectEqualQuat
                     (Q.quaternion 0 0 0 0)
                     (Q.quaternion 1.0e-11 0 0 0)
+        , test "Scaling" <|
+            \() ->
+                expectEqualQuat
+                    (Q.quaternion 2 4 6 8)
+                    (Q.scale 2 (Q.quaternion 1 2 3 4))
+        , test "Vector quaternions in different directions aren't similar" <|
+            \() ->
+                Expect.false "Expected vectors to not be similar"
+                    (Q.similar
+                        (Q.quaternion 0 1 2 3)
+                        (Q.quaternion 0 1 4 6)
+                    )
         , test "Rotation by 90 degrees about X axis" <|
             \() ->
                 expectEqualVec
                     (V.vector 0 0 1)
-                    (Q.rotateVector (Q.quaternion 1 1 0 0)
+                    (Q.rotate (Q.quaternion 1 1 0 0)
                         (V.vector 0 1 0)
                     )
         , test "Rotation by zero" <|
             \() ->
                 expectEqualVec
                     (V.vector 1 0 0)
-                    (Q.rotateVector
+                    (Q.rotate
                         (Q.quaternion 0 0 0 0)
                         (V.vector 1 0 0)
                     )
@@ -69,7 +85,25 @@ quaternionTests =
             \q v ->
                 expectEqualFloat
                     (V.length v)
-                    (V.length (Q.rotateVector q v))
+                    (V.length (Q.rotate q v))
+        , fuzz2 Fuzz.float quatFuzz "similarity" <|
+            \f q ->
+                let
+                    qScaled =
+                        Q.scale f q
+                in
+                    case ( f == 0, Q.similar q qScaled ) of
+                        ( True, True ) ->
+                            Expect.fail "Expect no similarity"
+
+                        ( False, False ) ->
+                            "Product = "
+                                ++ toString
+                                    (Q.mul (Q.conjugate q) qScaled)
+                                |> Expect.fail
+
+                        _ ->
+                            Expect.pass
         ]
 
 
@@ -83,6 +117,9 @@ frameTests =
 
         testVec =
             V.vector 2 -2 -1
+
+        yRotation =
+            Q.quaternion 0 0 1 0
     in
         describe "Reference Frames"
             [ test "Extrinsic nudge" <|
@@ -98,6 +135,20 @@ frameTests =
                                 V.vector (-75 / 13) (-43 / 13) (25 / 13)
                         }
                         (F.intrinsicNudge testVec testFrame)
+            , test "Extrinsic rotate" <|
+                \() ->
+                    expectEqualFrame
+                        { testFrame
+                            | orientation = Q.quaternion -6 4 1 -5
+                        }
+                        (F.extrinsicRotate yRotation testFrame)
+            , test "Intrinsic rotate" <|
+                \() ->
+                    expectEqualFrame
+                        { testFrame
+                            | orientation = Q.quaternion -6 -4 1 5
+                        }
+                        (F.intrinsicRotate yRotation testFrame)
             , test "Transforming a vector into a frame" <|
                 \() ->
                     expectEqualVec
@@ -125,6 +176,14 @@ frameTests =
                 \a b ->
                     expectEqualVec
                         (F.transformInto (F.compose a b) testVec)
+                        (testVec
+                            |> F.transformInto a
+                            |> F.transformInto b
+                        )
+            , fuzz2 frameFuzz frameFuzz "Frame multiplication" <|
+                \a b ->
+                    expectEqualVec
+                        (F.transformInto (F.mul a b) testVec)
                         (testVec
                             |> F.transformInto b
                             |> F.transformInto a
@@ -176,7 +235,7 @@ expectEqualFloat x y =
 
 quatFuzz : Fuzzer Quaternion
 quatFuzz =
-    Fuzz.map3 (Q.quaternion 1) Fuzz.float Fuzz.float Fuzz.float
+    Fuzz.map3 (flip Q.quaternion 1) Fuzz.float Fuzz.float Fuzz.float
 
 
 vecFuzz : Fuzzer Vector

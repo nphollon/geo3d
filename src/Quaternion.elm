@@ -1,4 +1,4 @@
-module Quaternion exposing (Quaternion, toVector, fromVector, fromAxisAngle, getX, getY, getZ, getW, equal, add, mul, compose, rotateVector, rotationFor, quaternion, conjugate, lengthSquared, length, encode, decode, identity, toMat4, rotateX, rotateY, rotateZ)
+module Quaternion exposing (Quaternion, toVector, fromVector, fromAxisAngle, getX, getY, getZ, getW, equal, similar, add, scale, mul, compose, rotate, reverseRotate, rotationFor, quaternion, conjugate, lengthSquared, length, encode, decode, identity, toMat4, rotateX, rotateY, rotateZ)
 
 {-| A quaternion type. Used for rotations in three dimensions.
 
@@ -8,7 +8,7 @@ module Quaternion exposing (Quaternion, toVector, fromVector, fromAxisAngle, get
 
 # Transforming
 
-@docs compose, conjugate, rotateVector
+@docs compose, conjugate, rotate
 
 # Interop
 
@@ -44,6 +44,20 @@ equal p q =
             && (aboutEqual (getX p) (getX q))
             && (aboutEqual (getY p) (getY q))
             && (aboutEqual (getZ p) (getZ q))
+
+
+similar : Quaternion -> Quaternion -> Bool
+similar p q =
+    if lengthSquared p > 0 && lengthSquared q > 0 then
+        mul p (conjugate q)
+            |> pureScalar
+    else
+        False
+
+
+pureScalar : Quaternion -> Bool
+pureScalar q =
+    Vector.lengthSquared q.vector / lengthSquared q < 1.0e-10
 
 
 {-| Get scalar component.
@@ -120,7 +134,7 @@ identity =
     q = rotateX (degrees 90)
     v = vector 0 1 0 -- y axis
 
-    rotateVector q v == vector 0 0 1 -- rotated into z axis
+    rotate q v == vector 0 0 1 -- rotated into z axis
 -}
 rotateX : Float -> Quaternion
 rotateX angle =
@@ -156,6 +170,13 @@ add : Quaternion -> Quaternion -> Quaternion
 add p q =
     { scalar = p.scalar + q.scalar
     , vector = Vector.add p.vector q.vector
+    }
+
+
+scale : Float -> Quaternion -> Quaternion
+scale f q =
+    { scalar = f * q.scalar
+    , vector = Vector.scale f q.vector
     }
 
 
@@ -208,8 +229,8 @@ The quaternion does not have to be a unit quaternion. The vector length will be 
 
 If given the zero quaternion, no rotation will be performed.
 -}
-rotateVector : Quaternion -> Vector -> Vector
-rotateVector q v =
+rotate : Quaternion -> Vector -> Vector
+rotate q v =
     let
         quadrance =
             lengthSquared q
@@ -224,6 +245,14 @@ rotateVector q v =
                 |> compose (conjugate q)
                 |> .vector
                 |> Vector.scale (1 / quadrance)
+
+
+{-| Rotate vector in the opposite direction.
+    reverseRotate q v == rotate (conjugate q) v
+-}
+reverseRotate : Quaternion -> Vector -> Vector
+reverseRotate q =
+    rotate (conjugate q)
 
 
 lengthSquared : Quaternion -> Float
