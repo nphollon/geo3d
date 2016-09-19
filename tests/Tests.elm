@@ -81,38 +81,51 @@ frameTests =
             , orientation = Q.quaternion 1 5 6 4
             }
 
-        testParticle =
+        testVec =
             V.vector 2 -2 -1
     in
         describe "Reference Frames"
-            [ test "Transforming a vector into a frame" <|
+            [ test "Extrinsic nudge" <|
+                \() ->
+                    expectEqualFrame
+                        { testFrame | position = V.vector -1 -6 0 }
+                        (F.extrinsicNudge testVec testFrame)
+            , test "Intrinsic nudge" <|
+                \() ->
+                    expectEqualFrame
+                        { testFrame
+                            | position =
+                                V.vector (-75 / 13) (-43 / 13) (25 / 13)
+                        }
+                        (F.intrinsicNudge testVec testFrame)
+            , test "Transforming a vector into a frame" <|
                 \() ->
                     expectEqualVec
                         (V.vector (-5 / 3) (128 / 39) (172 / 39))
-                        (F.transformInto testFrame testParticle)
+                        (F.transformInto testFrame testVec)
             , test "Transforming a vector out of a frame" <|
                 \() ->
                     expectEqualVec
                         (V.vector (-75 / 13) (-43 / 13) (25 / 13))
-                        (F.transformOutOf testFrame testParticle)
+                        (F.transformOutOf testFrame testVec)
             , fuzz frameFuzz "Inverse transforms" <|
                 \frame ->
                     expectEqualVec
-                        (F.transformOutOf frame testParticle)
-                        (F.transformInto (F.inverse frame) testParticle)
+                        (F.transformOutOf frame testVec)
+                        (F.transformInto (F.inverse frame) testVec)
             , fuzz frameFuzz "frame * inverse == identity" <|
                 \frame ->
                     expectEqualVec
-                        testParticle
+                        testVec
                         (F.transformInto
                             (F.compose frame (F.inverse frame))
-                            testParticle
+                            testVec
                         )
             , fuzz2 frameFuzz frameFuzz "Frame composition" <|
                 \a b ->
                     expectEqualVec
-                        (F.transformInto (F.compose a b) testParticle)
-                        (testParticle
+                        (F.transformInto (F.compose a b) testVec)
+                        (testVec
                             |> F.transformInto b
                             |> F.transformInto a
                         )
@@ -121,13 +134,21 @@ frameTests =
                     expectEqualVec
                         (F.transformInto
                             (F.compose a (F.compose b c))
-                            testParticle
+                            testVec
                         )
                         (F.transformInto
                             (F.compose (F.compose a b) c)
-                            testParticle
+                            testVec
                         )
             ]
+
+
+expectEqualFrame : Frame -> Frame -> Expectation
+expectEqualFrame f g =
+    if F.equal f g then
+        Expect.pass
+    else
+        Expect.equal f g
 
 
 expectEqualQuat : Quaternion -> Quaternion -> Expectation

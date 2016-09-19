@@ -1,4 +1,4 @@
-module Frame exposing (Frame, identity, transformInto, transformOutOf, toMat4, inverse, compose, setPosition, setOrientation, intrinsicNudge, intrinsicRotate, extrinsicNudge, extrinsicRotate, encode, decode)
+module Frame exposing (Frame, identity, equal, transformInto, transformOutOf, toMat4, inverse, compose, setPosition, setOrientation, intrinsicNudge, intrinsicRotate, extrinsicNudge, extrinsicRotate, encode, decode)
 
 {-| A Frame describes the difference between two coordinate systems -- the position and orientation of one reference frame relative to another.
 
@@ -25,6 +25,12 @@ type alias Frame =
     { position : Vector
     , orientation : Quaternion
     }
+
+
+equal : Frame -> Frame -> Bool
+equal f g =
+    Vector.equal f.position g.position
+        && Quaternion.equal f.orientation g.orientation
 
 
 {-| Convert to an [elm-linear-algebra Mat4](http://package.elm-lang.org/packages/elm-community/elm-linear-algebra/latest)
@@ -97,7 +103,10 @@ intrinsicNudge delta frame =
     { frame
         | position =
             Vector.add frame.position
-                (Quaternion.rotateVector frame.orientation delta)
+                (Quaternion.rotateVector
+                    (Quaternion.conjugate frame.orientation)
+                    delta
+                )
     }
 
 
