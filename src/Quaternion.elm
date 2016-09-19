@@ -1,18 +1,22 @@
-module Quaternion exposing (Quaternion, toVector, fromVector, fromAxisAngle, getX, getY, getZ, getW, equal, similar, add, scale, mul, compose, rotate, reverseRotate, rotationFor, quaternion, conjugate, lengthSquared, length, encode, decode, identity, toMat4, rotateX, rotateY, rotateZ)
+module Quaternion exposing (Quaternion, toVector, fromVector, fromAxisAngle, getX, getY, getZ, getW, equal, similar, add, scale, mul, compose, rotate, reverseRotate, rotationFor, quaternion, conjugate, lengthSquared, length, encode, decode, identity, toMat4, xRotation, yRotation, zRotation)
 
 {-| A quaternion type. Used for rotations in three dimensions.
 
 # Building
+@docs Quaternion, quaternion, identity, xRotation, yRotation, zRotation, rotationFor, fromAxisAngle, fromVector, toVector
 
-@docs Quaternion, quaternion, identity, rotateX, rotateY, rotateZ, rotationFor, fromAxisAngle, fromVector, toVector
-
-# Transforming
-
-@docs compose, conjugate, rotate
+# Working With Rotations
+@docs similar, mul, compose, conjugate, rotate, reverseRotate
 
 # Interop
-
 @docs encode, decode, toMat4
+
+# Lesser Math
+
+These functions are not as useful if you are just using quaternions to handle 3D rotations.
+
+@docs equal, getW, getX, getY, getZ, lengthSquared, length, add, scale
+
 -}
 
 import Json.Encode as Encode exposing (Value)
@@ -29,7 +33,7 @@ type alias Quaternion =
     }
 
 
-{-| Returns true when two quaternions are about equal.
+{-| Returns true when two quaternions are about equal (within 10^-5).
 -}
 equal : Quaternion -> Quaternion -> Bool
 equal p q =
@@ -46,9 +50,17 @@ equal p q =
             && (aboutEqual (getZ p) (getZ q))
 
 
+{-| Returns true if two quaternions represent the same rotation.
+
+Rotation depends on the direction that a quaternion points in, but not its length.
+
+The zero quaternion is only similar to itself.
+-}
 similar : Quaternion -> Quaternion -> Bool
 similar p q =
-    if lengthSquared p > 0 && lengthSquared q > 0 then
+    if equal p q then
+        True
+    else if lengthSquared p > 0 && lengthSquared q > 0 then
         mul p (conjugate q)
             |> pureScalar
     else
@@ -131,27 +143,27 @@ identity =
 
 {-| Create a quaternion corresponding to a rotation about the x axis by the given angle. Rotation is counter-clockwise.
 
-    q = rotateX (degrees 90)
+    q = xRotation (degrees 90)
     v = vector 0 1 0 -- y axis
 
     rotate q v == vector 0 0 1 -- rotated into z axis
 -}
-rotateX : Float -> Quaternion
-rotateX angle =
+xRotation : Float -> Quaternion
+xRotation angle =
     quaternion (cos (0.5 * angle)) (sin (0.5 * angle)) 0 0
 
 
 {-| Create a quaternion corresponding to a rotation about the y axis by the given angle.
 -}
-rotateY : Float -> Quaternion
-rotateY angle =
+yRotation : Float -> Quaternion
+yRotation angle =
     quaternion (cos (0.5 * angle)) 0 (sin (0.5 * angle)) 0
 
 
 {-| Create a quaternion corresponding to a rotation about the z axis by the given angle.
 -}
-rotateZ : Float -> Quaternion
-rotateZ angle =
+zRotation : Float -> Quaternion
+zRotation angle =
     quaternion (cos (0.5 * angle)) 0 0 (sin (0.5 * angle))
 
 
@@ -173,6 +185,8 @@ add p q =
     }
 
 
+{-| Multiply all of the quaternion's components by a factor.
+-}
 scale : Float -> Quaternion -> Quaternion
 scale f q =
     { scalar = f * q.scalar
@@ -205,7 +219,7 @@ compose =
 
 {-| Get the angle of rotation for a quaternion.
 
-    angle (rotateY 0.2) == 0.2
+    angle (yRotation 0.2) == 0.2
 -}
 angle : Quaternion -> Float
 angle q =
@@ -214,7 +228,7 @@ angle q =
 
 {-| Get the axis of rotation for a quaternion. Defaults to the x axis if there is no rotation.
 
-    axis (rotateY 0.2) == vector 0 1 0
+    axis (yRotation 0.2) == vector 0 1 0
     axis identity == vector 1 0 0
 -}
 axis : Quaternion -> Vector
@@ -255,11 +269,15 @@ reverseRotate q =
     rotate (conjugate q)
 
 
+{-| The square of the length.
+-}
 lengthSquared : Quaternion -> Float
 lengthSquared q =
     q.scalar ^ 2 + (Vector.lengthSquared q.vector)
 
 
+{-| The length, or norm, of the quaternion.
+-}
 length : Quaternion -> Float
 length =
     sqrt << lengthSquared

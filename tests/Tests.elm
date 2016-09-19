@@ -149,6 +149,25 @@ frameTests =
                             | orientation = Q.quaternion -6 -4 1 5
                         }
                         (F.intrinsicRotate yRotation testFrame)
+            , test "Frame equality with similar orientations" <|
+                \() ->
+                    expectEqualFrame
+                        { position = testVec
+                        , orientation = Q.quaternion 1 1 1 1
+                        }
+                        { position = testVec
+                        , orientation = Q.quaternion 2 2 2 2
+                        }
+            , test "Frame inequality" <|
+                \() ->
+                    Expect.false "Frames should not be equal" <|
+                        F.equal
+                            { position = testVec
+                            , orientation = Q.quaternion 1 1 1 1
+                            }
+                            { position = testVec
+                            , orientation = Q.quaternion 1 2 2 2
+                            }
             , test "Transforming a vector into a frame" <|
                 \() ->
                     expectEqualVec

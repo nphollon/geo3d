@@ -3,10 +3,13 @@ module Frame exposing (Frame, identity, equal, transformInto, transformOutOf, to
 {-| A Frame describes the difference between two coordinate systems -- the position and orientation of one reference frame relative to another.
 
 # Definition
-@docs Frame, identity
+@docs Frame, identity, equal
 
-# Changing Frames
-@docs setPosition, intrinsicNudge, extrinsicNudge, setOrientation, intrinsicRotate, extrinsicRotate, transformInto, transformOutOf, inverse, compose
+# Coordinate Transforms
+@docs transformInto, transformOutOf, mul, compose, inverse
+
+# Mutating Frames
+@docs setPosition, intrinsicNudge, extrinsicNudge, setOrientation, intrinsicRotate, extrinsicRotate
 
 # Interop
 @docs encode, decode, toMat4
@@ -27,10 +30,12 @@ type alias Frame =
     }
 
 
+{-| Two frames are equal if their positions and orientations match.
+-}
 equal : Frame -> Frame -> Bool
 equal f g =
     Vector.equal f.position g.position
-        && Quaternion.equal f.orientation g.orientation
+        && Quaternion.similar f.orientation g.orientation
 
 
 {-| Convert to an [elm-linear-algebra Mat4](http://package.elm-lang.org/packages/elm-community/elm-linear-algebra/latest)
