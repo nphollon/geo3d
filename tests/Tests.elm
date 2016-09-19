@@ -5,10 +5,19 @@ import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer)
 import Vector as V exposing (Vector)
 import Quaternion as Q exposing (Quaternion)
+import Frame as F exposing (Frame)
 
 
 all : Test
 all =
+    describe "All Tests"
+        [ quaternionTests
+        , frameTests
+        ]
+
+
+quaternionTests : Test
+quaternionTests =
     describe "Quaternion"
         [ test "Addition" <|
             \() ->
@@ -58,18 +67,59 @@ all =
                     (Q.mul (Q.mul p q) r)
         , fuzz2 quatFuzz vecFuzz "rotations preserve length" <|
             \q v ->
-                expectAboutEqual
+                expectEqualFloat
                     (V.length v)
                     (V.length (Q.rotateVector q v))
         ]
 
 
+frameTests : Test
+frameTests =
+    let
+        testFrame =
+            { position = V.vector -3 -4 1
+            , orientation = Q.quaternion 1 5 6 4
+            }
 
--- associativity of addition
--- associativity of multiplication
--- distributivity of multiplication over addition
--- rotations preserve length
--- rotation by zero
+        testParticle =
+            V.vector 2 -2 -1
+    in
+        describe "Reference Frames"
+            [ test "Transforming a vector into a frame" <|
+                \() ->
+                    expectEqualVec
+                        (V.vector (-5 / 3) (128 / 39) (172 / 39))
+                        (F.transformInto testFrame testParticle)
+            , test "Transforming a vector out of a frame" <|
+                \() ->
+                    expectEqualVec
+                        (V.vector (-75 / 13) (-43 / 13) (25 / 13))
+                        (F.transformOutOf testFrame testParticle)
+            , fuzz frameFuzz "Inverse transforms" <|
+                \frame ->
+                    expectEqualVec
+                        (F.transformOutOf frame testParticle)
+                        (F.transformInto (F.inverse frame) testParticle)
+            , fuzz frameFuzz "frame * inverse == identity" <|
+                \frame ->
+                    expectEqualVec
+                        testParticle
+                        (F.transformInto
+                            (F.compose frame (F.inverse frame))
+                            testParticle
+                        )
+            , fuzz3 frameFuzz frameFuzz frameFuzz "Frame composition should be associative" <|
+                \a b c ->
+                    expectEqualVec
+                        (F.transformInto
+                            (F.compose a (F.compose b c))
+                            testParticle
+                        )
+                        (F.transformInto
+                            (F.compose (F.compose a b) c)
+                            testParticle
+                        )
+            ]
 
 
 expectEqualQuat : Quaternion -> Quaternion -> Expectation
@@ -88,8 +138,8 @@ expectEqualVec u v =
         Expect.equal u v
 
 
-expectAboutEqual : Float -> Float -> Expectation
-expectAboutEqual x y =
+expectEqualFloat : Float -> Float -> Expectation
+expectEqualFloat x y =
     Expect.lessThan
         1.0e-10
         ((x - y) ^ 2)
@@ -103,3 +153,7 @@ quatFuzz =
 vecFuzz : Fuzzer Vector
 vecFuzz =
     Fuzz.map3 V.vector Fuzz.float Fuzz.float Fuzz.float
+
+
+frameFuzz =
+    Fuzz.map2 Frame vecFuzz quatFuzz

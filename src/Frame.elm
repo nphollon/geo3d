@@ -48,8 +48,7 @@ identity =
 -}
 transformInto : Frame -> Vector -> Vector
 transformInto frame point =
-    Quaternion.rotateVector
-        (Quaternion.conjugate frame.orientation)
+    Quaternion.rotateVector frame.orientation
         (Vector.sub point frame.position)
 
 
@@ -57,8 +56,11 @@ transformInto frame point =
 -}
 transformOutOf : Frame -> Vector -> Vector
 transformOutOf frame point =
-    Quaternion.rotateVector frame.orientation point
-        |> Vector.add frame.position
+    Vector.add frame.position
+        (Quaternion.rotateVector
+            (Quaternion.conjugate frame.orientation)
+            point
+        )
 
 
 {-| Given a frame A to B, and another frame B to C, return the frame A to C.
