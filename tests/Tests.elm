@@ -108,6 +108,14 @@ frameTests =
                             (F.compose frame (F.inverse frame))
                             testParticle
                         )
+            , fuzz2 frameFuzz frameFuzz "Frame composition" <|
+                \a b ->
+                    expectEqualVec
+                        (F.transformInto (F.compose a b) testParticle)
+                        (testParticle
+                            |> F.transformInto b
+                            |> F.transformInto a
+                        )
             , fuzz3 frameFuzz frameFuzz frameFuzz "Frame composition should be associative" <|
                 \a b c ->
                     expectEqualVec
@@ -147,7 +155,7 @@ expectEqualFloat x y =
 
 quatFuzz : Fuzzer Quaternion
 quatFuzz =
-    Fuzz.map4 Q.quaternion Fuzz.float Fuzz.float Fuzz.float Fuzz.float
+    Fuzz.map3 (Q.quaternion 1) Fuzz.float Fuzz.float Fuzz.float
 
 
 vecFuzz : Fuzzer Vector

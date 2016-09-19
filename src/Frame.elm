@@ -63,12 +63,12 @@ transformOutOf frame point =
         )
 
 
-{-| Given a frame A to B, and another frame B to C, return the frame A to C.
+{-| Given a frame B to C, and another frame A to B, return the frame A to C.
 -}
 compose : Frame -> Frame -> Frame
-compose parent child =
+compose child parent =
     { position = transformOutOf parent child.position
-    , orientation = Quaternion.compose parent.orientation child.orientation
+    , orientation = Quaternion.mul child.orientation parent.orientation
     }
 
 
@@ -76,7 +76,9 @@ compose parent child =
 -}
 inverse : Frame -> Frame
 inverse frame =
-    { position = transformInto frame Vector.zero
+    { position =
+        Vector.negate frame.position
+            |> Quaternion.rotateVector frame.orientation
     , orientation = Quaternion.conjugate frame.orientation
     }
 
