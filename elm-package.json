@@ -1,5 +1,5 @@
 {
-    "version": "1.1.0",
+    "version": "2.0.0",
     "summary": "Vectors and Quaternions for 3D Geometry",
     "repository": "https://github.com/nphollon/geo3d.git",
     "license": "Apache2.0",
