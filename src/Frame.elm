@@ -3,9 +3,10 @@ module Frame exposing (Frame, identity, equal, transformInto, transformOutOf, to
 {-| A Frame describes the difference between two coordinate systems -- the position and orientation of one reference frame relative to another.
 
 # Definition
+
 @docs Frame, identity, equal
 
-# Coordinate Transforms
+# Coordinate Transformations
 @docs transformInto, transformOutOf, mul, compose, inverse
 
 # Mutating Frames
@@ -30,22 +31,6 @@ type alias Frame =
     }
 
 
-{-| Two frames are equal if their positions and orientations match.
--}
-equal : Frame -> Frame -> Bool
-equal f g =
-    Vector.equal f.position g.position
-        && Quaternion.similar f.orientation g.orientation
-
-
-{-| Convert to an [elm-linear-algebra Mat4](http://package.elm-lang.org/packages/elm-community/elm-linear-algebra/latest)
--}
-toMat4 : Frame -> Mat4
-toMat4 frame =
-    Mat4.mul (Mat4.makeTranslate (Vector.toVec3 frame.position))
-        (Quaternion.toMat4 frame.orientation)
-
-
 {-| The identity frame corresponds to no transformation.
 -}
 identity : Frame
@@ -53,6 +38,14 @@ identity =
     { position = Vector.identity
     , orientation = Quaternion.identity
     }
+
+
+{-| Two frames are equal if their positions and orientations match.
+-}
+equal : Frame -> Frame -> Bool
+equal f g =
+    Vector.equal f.position g.position
+        && Quaternion.similar f.orientation g.orientation
 
 
 {-| Given a frame and an extrinsic vector, return the corresponding intrinsic vector.
@@ -171,3 +164,11 @@ decode =
     Decode.object2 Frame
         ("position" := Vector.decode)
         ("orientation" := Quaternion.decode)
+
+
+{-| Convert to an [elm-linear-algebra Mat4](http://package.elm-lang.org/packages/elm-community/elm-linear-algebra/latest)
+-}
+toMat4 : Frame -> Mat4
+toMat4 frame =
+    Mat4.mul (Mat4.makeTranslate (Vector.toVec3 frame.position))
+        (Quaternion.toMat4 frame.orientation)

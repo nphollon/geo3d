@@ -3,13 +3,11 @@ module Tests exposing (..)
 import Test exposing (..)
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer)
+import Math.Matrix4 as Mat4
+import Math.Vector3 as Vec3
 import Vector as V exposing (Vector)
 import Quaternion as Q exposing (Quaternion)
 import Frame as F exposing (Frame)
-
-
--- Test intrinsic/extrinsic rotate
--- Quaternion equivalence
 
 
 all : Test
@@ -104,6 +102,11 @@ quaternionTests =
 
                         _ ->
                             Expect.pass
+        , test "Converting to rotation matrix" <|
+            \() ->
+                Expect.equal
+                    (Mat4.makeRotate (degrees 90) (Vec3.vec3 0 1 0))
+                    (Q.toMat4 (Q.quaternion 1 0 1 0))
         ]
 
 
