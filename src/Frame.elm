@@ -68,6 +68,7 @@ transformOutOf frame point =
 
 
 {-| Given a frame B to C, and another frame A to B, return the frame A to C.
+
     transformInto (mul a b) vec == transformInto a (transformInto b vec)
 -}
 mul : Frame -> Frame -> Frame
