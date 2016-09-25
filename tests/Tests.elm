@@ -244,7 +244,7 @@ frameTests =
             , test "Mat4 form should transform vectors the same way" <|
                 \() ->
                     expectEqualVec
-                        (V.vector (-5 / 3) (128 / 39) (172 / 39))
+                        (V.vector (-75 / 13) (-43 / 13) (25 / 13))
                         (V.toVec3 testVec
                             |> Mat4.transform (F.toMat4 testFrame)
                             |> V.fromVec3
