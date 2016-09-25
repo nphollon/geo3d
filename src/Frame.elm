@@ -171,5 +171,10 @@ decode =
 -}
 toMat4 : Frame -> Mat4
 toMat4 frame =
-    Mat4.mul (Mat4.makeTranslate (Vector.toVec3 frame.position))
-        (Quaternion.toMat4 frame.orientation)
+    let
+        transformedOffset =
+            Quaternion.rotate frame.orientation
+                (Vector.negate frame.position)
+    in
+        Mat4.mul (Mat4.makeTranslate (Vector.toVec3 transformedOffset))
+            (Quaternion.toMat4 frame.orientation)

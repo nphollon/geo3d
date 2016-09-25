@@ -241,15 +241,14 @@ frameTests =
                             (F.compose (F.compose a b) c)
                             testVec
                         )
-            , test "Frame to Matrix4" <|
+            , test "Mat4 form should transform vectors the same way" <|
                 \() ->
-                    expectEqualMat4
-                        (Mat4.makeTranslate3 -3 -4 1
-                            |> Mat4.rotate
-                                (pi - asin (sqrt 77 / 39))
-                                (Vec3.vec3 5 6 4)
+                    expectEqualVec
+                        (V.vector (-5 / 3) (128 / 39) (172 / 39))
+                        (V.toVec3 testVec
+                            |> Mat4.transform (F.toMat4 testFrame)
+                            |> V.fromVec3
                         )
-                        (F.toMat4 testFrame)
             ]
 
 
