@@ -345,7 +345,9 @@ angle q =
         s =
             asin (2 * halfTurn / (1 + halfTurn ^ 2))
     in
-        if halfTurn < -1 then
+        if q.scalar == 0 then
+            pi
+        else if halfTurn < -1 then
             s - pi
         else if halfTurn < 0 then
             -s
