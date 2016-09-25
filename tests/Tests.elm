@@ -116,7 +116,7 @@ quaternionTests =
             \() ->
                 Expect.equal
                     (Mat4.makeRotate (degrees 210) (Vec3.vec3 0 1 0))
-                    (Q.toMat4 (Q.quaternion 1 0 -3.7320508075688776 0))
+                    (Q.toMat4 (Q.quaternion -1 0 3.7320508075688776 0))
         , test "Converting to rotation matrix, Q4 angle" <|
             \() ->
                 Expect.equal

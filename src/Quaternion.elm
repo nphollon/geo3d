@@ -347,11 +347,7 @@ angle q =
     in
         if q.scalar == 0 then
             pi
-        else if halfTurn < -1 then
-            s - pi
-        else if halfTurn < 0 then
-            -s
-        else if halfTurn < 1 then
+        else if abs halfTurn < 1 then
             s
         else
             pi - s
