@@ -3,7 +3,7 @@ module Tests exposing (..)
 import Test exposing (..)
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer)
-import Math.Matrix4 as Mat4
+import Math.Matrix4 as Mat4 exposing (Mat4)
 import Math.Vector3 as Vec3
 import Vector as V exposing (Vector)
 import Quaternion as Q exposing (Quaternion)
@@ -221,6 +221,15 @@ frameTests =
                             (F.compose (F.compose a b) c)
                             testVec
                         )
+            , test "Frame to Matrix4" <|
+                \() ->
+                    expectEqualMat4
+                        (Mat4.makeTranslate3 -3 -4 1
+                            |> Mat4.rotate
+                                (pi - asin (sqrt 77 / 39))
+                                (Vec3.vec3 5 6 4)
+                        )
+                        (F.toMat4 testFrame)
             ]
 
 
@@ -253,6 +262,30 @@ expectEqualFloat x y =
     Expect.lessThan
         1.0e-10
         ((x - y) ^ 2)
+
+
+expectEqualMat4 : Mat4 -> Mat4 -> Expectation
+expectEqualMat4 a b =
+    let
+        transform v m =
+            V.fromVec3 (Mat4.transform m v)
+
+        firstCol =
+            transform (Vec3.vec3 1 0 0)
+
+        secondCol =
+            transform (Vec3.vec3 0 1 0)
+
+        thirdCol =
+            transform (Vec3.vec3 0 0 1)
+
+        equal xf =
+            V.equal (xf a) (xf b)
+    in
+        if equal firstCol && equal secondCol && equal thirdCol then
+            Expect.pass
+        else
+            Expect.equal a b
 
 
 quatFuzz : Fuzzer Quaternion
