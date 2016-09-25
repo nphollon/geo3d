@@ -102,11 +102,26 @@ quaternionTests =
 
                         _ ->
                             Expect.pass
-        , test "Converting to rotation matrix" <|
+        , test "Converting to rotation matrix, Q1 angle" <|
             \() ->
                 Expect.equal
-                    (Mat4.makeRotate (degrees 90) (Vec3.vec3 0 1 0))
-                    (Q.toMat4 (Q.quaternion 1 0 1 0))
+                    (Mat4.makeRotate (degrees 30) (Vec3.vec3 0 1 0))
+                    (Q.toMat4 (Q.quaternion 1 0 0.26794919243112303 0))
+        , test "Converting to rotation matrix, Q2 angle" <|
+            \() ->
+                Expect.equal
+                    (Mat4.makeRotate (degrees 150) (Vec3.vec3 0 1 0))
+                    (Q.toMat4 (Q.quaternion 1 0 3.7320508075688776 0))
+        , test "Converting to rotation matrix, Q3 angle" <|
+            \() ->
+                Expect.equal
+                    (Mat4.makeRotate (degrees 210) (Vec3.vec3 0 1 0))
+                    (Q.toMat4 (Q.quaternion 1 0 -3.7320508075688776 0))
+        , test "Converting to rotation matrix, Q4 angle" <|
+            \() ->
+                Expect.equal
+                    (Mat4.makeRotate (degrees 330) (Vec3.vec3 0 1 0))
+                    (Q.toMat4 (Q.quaternion 1 0 -0.26794919243112303 0))
         ]
 
 
