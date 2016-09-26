@@ -142,7 +142,12 @@ frameTests =
             V.vector 2 -2 -1
 
         yRotation =
-            Q.quaternion 0 0 1 0
+            Q.quaternion 1 0 1 0
+
+        xRotFrame =
+            { position = V.zero
+            , orientation = Q.quaternion 1 1 0 0
+            }
     in
         describe "Reference Frames"
             [ test "Extrinsic nudge" <|
@@ -160,18 +165,20 @@ frameTests =
                         (F.intrinsicNudge testVec testFrame)
             , test "Extrinsic rotate" <|
                 \() ->
-                    expectEqualFrame
-                        { testFrame
-                            | orientation = Q.quaternion -6 4 1 -5
-                        }
-                        (F.extrinsicRotate yRotation testFrame)
+                    expectEqualVec
+                        (V.vector -1 0 0)
+                        (F.transformInto
+                            (F.extrinsicRotate yRotation xRotFrame)
+                            (V.vector 0 0 1)
+                        )
             , test "Intrinsic rotate" <|
                 \() ->
-                    expectEqualFrame
-                        { testFrame
-                            | orientation = Q.quaternion -6 -4 1 5
-                        }
-                        (F.intrinsicRotate yRotation testFrame)
+                    expectEqualVec
+                        (V.vector 0 1 0)
+                        (F.transformInto
+                            (F.intrinsicRotate yRotation xRotFrame)
+                            (V.vector 0 0 1)
+                        )
             , test "Frame equality with similar orientations" <|
                 \() ->
                     expectEqualFrame
@@ -194,12 +201,12 @@ frameTests =
             , test "Transforming a vector into a frame" <|
                 \() ->
                     expectEqualVec
-                        (V.vector (-5 / 3) (128 / 39) (172 / 39))
+                        (V.vector (-25 / 39) (68 / 39) (212 / 39))
                         (F.transformInto testFrame testVec)
             , test "Transforming a vector out of a frame" <|
                 \() ->
                     expectEqualVec
-                        (V.vector (-75 / 13) (-43 / 13) (25 / 13))
+                        (V.vector (-17 / 3) (-103 / 39) (31 / 39))
                         (F.transformOutOf testFrame testVec)
             , fuzz frameFuzz "Inverse transforms" <|
                 \frame ->
@@ -244,7 +251,7 @@ frameTests =
             , test "Mat4 form should transform vectors the same way" <|
                 \() ->
                     expectEqualVec
-                        (V.vector (-75 / 13) (-43 / 13) (25 / 13))
+                        (V.vector (-17 / 3) (-103 / 39) (31 / 39))
                         (V.toVec3 testVec
                             |> Mat4.transform (F.toMat4 testFrame)
                             |> V.fromVec3

@@ -52,7 +52,7 @@ equal f g =
 -}
 transformInto : Frame -> Vector -> Vector
 transformInto frame point =
-    Quaternion.rotate frame.orientation
+    Quaternion.rotate (Quaternion.conjugate frame.orientation)
         (Vector.sub point frame.position)
 
 
@@ -60,40 +60,45 @@ transformInto frame point =
 -}
 transformOutOf : Frame -> Vector -> Vector
 transformOutOf frame point =
-    Vector.add frame.position
-        (Quaternion.rotate
-            (Quaternion.conjugate frame.orientation)
-            point
-        )
+    Quaternion.rotate frame.orientation point
+        |> Vector.add frame.position
 
 
 {-| Given a frame B to C, and another frame A to B, return the frame A to C.
-
-    transformInto (mul a b) vec == transformInto a (transformInto b vec)
 -}
 mul : Frame -> Frame -> Frame
-mul child parent =
-    { position = transformOutOf parent child.position
-    , orientation = Quaternion.mul child.orientation parent.orientation
-    }
+mul =
+    flip compose
 
 
 {-| Given a frame A to B, and another frame B to C, return the frame A to C.
+
+    transformOutOf (compose a b) == transformOutOf b >> transformOutOf a
+    transformInto (compose a b) == transformInto a >> transformInto b
 -}
 compose : Frame -> Frame -> Frame
-compose =
-    flip mul
+compose parent child =
+    { position =
+        Quaternion.rotate parent.orientation child.position
+            |> Vector.add parent.position
+    , orientation =
+        Quaternion.mul parent.orientation child.orientation
+    }
 
 
 {-| Given a frame A to B, return the frame B to A
 -}
 inverse : Frame -> Frame
 inverse frame =
-    { position =
-        Vector.negate frame.position
-            |> Quaternion.rotate frame.orientation
-    , orientation = Quaternion.conjugate frame.orientation
-    }
+    let
+        invOrientation =
+            Quaternion.conjugate frame.orientation
+    in
+        { position =
+            Vector.negate frame.position
+                |> Quaternion.rotate invOrientation
+        , orientation = invOrientation
+        }
 
 
 {-| Set the position of a frame.
@@ -107,14 +112,12 @@ setPosition newPosition frame =
 -}
 intrinsicNudge : Vector -> Frame -> Frame
 intrinsicNudge delta frame =
-    { frame
-        | position =
-            Vector.add frame.position
-                (Quaternion.rotate
-                    (Quaternion.conjugate frame.orientation)
-                    delta
-                )
-    }
+    let
+        transformedDelta =
+            Quaternion.rotate (Quaternion.conjugate frame.orientation)
+                delta
+    in
+        { frame | position = Vector.add frame.position transformedDelta }
 
 
 {-| Translate a frame by a displacement definined outside the frame.
@@ -138,14 +141,20 @@ setOrientation newOrientation frame =
 -}
 intrinsicRotate : Quaternion -> Frame -> Frame
 intrinsicRotate delta frame =
-    { frame | orientation = Quaternion.mul frame.orientation delta }
+    { frame
+        | orientation =
+            Quaternion.mul frame.orientation delta
+    }
 
 
 {-| Rotate a frame by a rotation defined outside the frame.
 -}
 extrinsicRotate : Quaternion -> Frame -> Frame
 extrinsicRotate delta frame =
-    { frame | orientation = Quaternion.mul delta frame.orientation }
+    { frame
+        | orientation =
+            Quaternion.mul delta frame.orientation
+    }
 
 
 {-| Convert a frame into a [Json Value](http://package.elm-lang.org/packages/elm-lang/core/latest/Json-Encode).
@@ -173,4 +182,4 @@ toMat4 : Frame -> Mat4
 toMat4 frame =
     Mat4.mul
         (Mat4.makeTranslate (Vector.toVec3 frame.position))
-        (Quaternion.toMat4 (Quaternion.conjugate frame.orientation))
+        (Quaternion.toMat4 frame.orientation)
