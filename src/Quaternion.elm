@@ -1,4 +1,4 @@
-module Quaternion exposing (Quaternion, toVector, fromVector, fromAxisAngle, getX, getY, getZ, getW, equal, similar, add, scale, mul, compose, rotate, reverseRotate, rotationFor, quaternion, conjugate, lengthSquared, length, encode, decode, identity, toMat4, xRotation, yRotation, zRotation)
+module Quaternion exposing (Quaternion, toVector, fromVector, fromAxisAngle, getX, getY, getZ, getW, equal, similar, add, normalize, scale, mul, compose, rotate, reverseRotate, rotationFor, quaternion, conjugate, lengthSquared, length, encode, decode, identity, toMat4, xRotation, yRotation, zRotation)
 
 {-| A quaternion type. Used for rotations in three dimensions.
 
@@ -15,7 +15,7 @@ module Quaternion exposing (Quaternion, toVector, fromVector, fromAxisAngle, get
 
 These functions are not as useful if you are just using quaternions to handle 3D rotations.
 
-@docs equal, getW, getX, getY, getZ, lengthSquared, length, add, scale
+@docs equal, getW, getX, getY, getZ, normalize, lengthSquared, length, add, scale
 
 -}
 
@@ -288,6 +288,16 @@ rotate q v =
 reverseRotate : Quaternion -> Vector -> Vector
 reverseRotate q =
     rotate (conjugate q)
+
+
+{-| Return the unit quaternion that points in the same direction as the given quaternion. Return Nothing if given the zero quaternion.
+-}
+normalize : Quaternion -> Maybe Quaternion
+normalize q =
+    if lengthSquared q == 0 then
+        Nothing
+    else
+        Just (scale (1 / length q) q)
 
 
 {-| The square of the length.

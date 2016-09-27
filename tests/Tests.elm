@@ -52,6 +52,13 @@ quaternionTests =
                 expectEqualQuat
                     (Q.quaternion 2 4 6 8)
                     (Q.scale 2 (Q.quaternion 1 2 3 4))
+        , test "Normalizing" <|
+            \() ->
+                expectEqualQuat
+                    (Q.quaternion (3 / 85) (12 / 85) (84 / 85) (4 / 85))
+                    (Q.normalize (Q.quaternion 3 12 84 4)
+                        |> Maybe.withDefault Q.identity
+                    )
         , test "Vector quaternions in different directions aren't similar" <|
             \() ->
                 Expect.false "Expected vectors to not be similar"
