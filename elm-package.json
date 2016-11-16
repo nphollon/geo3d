@@ -1,5 +1,5 @@
 {
-    "version": "2.1.0",
+    "version": "2.1.1",
     "summary": "Vectors and Quaternions for 3D Geometry",
     "repository": "https://github.com/nphollon/geo3d.git",
     "license": "Apache2.0",
@@ -12,8 +12,8 @@
         "Quaternion"
     ],
     "dependencies": {
-        "elm-community/elm-linear-algebra": "2.0.3 <= v < 3.0.0",
-        "elm-lang/core": "4.0.5 <= v < 5.0.0"
+        "elm-community/linear-algebra": "1.0.0 <= v < 2.0.0",
+        "elm-lang/core": "5.0.0 <= v < 6.0.0"
     },
-    "elm-version": "0.17.0 <= v < 0.18.0"
+    "elm-version": "0.18.0 <= v < 0.19.0"
 }

@@ -17,7 +17,7 @@ module Frame exposing (Frame, identity, equal, transformInto, transformOutOf, to
 -}
 
 import Json.Encode as Encode exposing (Value)
-import Json.Decode as Decode exposing (Decoder, (:=))
+import Json.Decode as Decode exposing (Decoder)
 import Math.Matrix4 as Mat4 exposing (Mat4)
 import Vector as Vector exposing (Vector)
 import Quaternion as Quaternion exposing (Quaternion)
@@ -171,9 +171,9 @@ encode frame =
 -}
 decode : Decoder Frame
 decode =
-    Decode.object2 Frame
-        ("position" := Vector.decode)
-        ("orientation" := Quaternion.decode)
+    Decode.map2 Frame
+        (Decode.field "position" Vector.decode)
+        (Decode.field "orientation" Quaternion.decode)
 
 
 {-| Convert to an [elm-linear-algebra Mat4](http://package.elm-lang.org/packages/elm-community/elm-linear-algebra/latest)

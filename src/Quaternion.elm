@@ -212,11 +212,11 @@ getZ q =
 -}
 mul : Quaternion -> Quaternion -> Quaternion
 mul p q =
-    { scalar = q.scalar * p.scalar - (Vector.dot q.vector p.vector)
+    { scalar = q.scalar * p.scalar - Vector.dot q.vector p.vector
     , vector =
-        (Vector.scale q.scalar p.vector)
-            `Vector.add` (Vector.scale p.scalar q.vector)
-            `Vector.add` (Vector.cross p.vector q.vector)
+        Vector.scale q.scalar p.vector
+            |> Vector.add (Vector.scale p.scalar q.vector)
+            |> Vector.add (Vector.cross p.vector q.vector)
     }
 
 
@@ -330,11 +330,11 @@ encode q =
 -}
 decode : Decoder Quaternion
 decode =
-    Decode.tuple4 quaternion
-        Decode.float
-        Decode.float
-        Decode.float
-        Decode.float
+    Decode.map4 quaternion
+        (Decode.index 0 Decode.float)
+        (Decode.index 1 Decode.float)
+        (Decode.index 2 Decode.float)
+        (Decode.index 3 Decode.float)
 
 
 {-| Convert to an [elm-linear-algebra Mat4](http://package.elm-lang.org/packages/elm-community/elm-linear-algebra/latest)

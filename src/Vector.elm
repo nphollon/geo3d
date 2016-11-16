@@ -171,7 +171,7 @@ normalize v =
 -}
 direction : Vector -> Vector -> Maybe Vector
 direction u v =
-    normalize (u `sub` v)
+    normalize (sub u v)
 
 
 {-| Length of a vector. Always greater than or equal to zero.
@@ -185,7 +185,7 @@ length =
 -}
 lengthSquared : Vector -> Float
 lengthSquared v =
-    v `dot` v
+    dot v v
 
 
 {-| Distance from one vector to another. Always greater than or equal to zero.
@@ -195,14 +195,14 @@ lengthSquared v =
 -}
 distance : Vector -> Vector -> Float
 distance u v =
-    length (u `sub` v)
+    length (sub u v)
 
 
 {-| Square of the distance between two vectors.
 -}
 distanceSquared : Vector -> Vector -> Float
 distanceSquared u v =
-    lengthSquared (u `sub` v)
+    lengthSquared (sub u v)
 
 
 {-| Returns true when two vectors are about equal (within 10^-5).
@@ -254,7 +254,10 @@ encode v =
 -}
 decode : Decoder Vector
 decode =
-    Decode.tuple3 vector Decode.float Decode.float Decode.float
+    Decode.map3 vector
+        (Decode.index 0 Decode.float)
+        (Decode.index 1 Decode.float)
+        (Decode.index 2 Decode.float)
 
 
 {-| Convert from an [elm-linear-algebra Vec3](http://package.elm-lang.org/packages/elm-community/elm-linear-algebra/latest)
