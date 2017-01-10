@@ -81,6 +81,11 @@ quaternionTests =
                         (Q.quaternion 0 0 0 0)
                         (V.vector 1 0 0)
                     )
+        , test "Rotation from +X axis to -X axis" <|
+            \() ->
+                expectEqualQuat
+                    (Q.quaternion 0 0 1 0)
+                    (Q.rotationFor (V.vector 1 0 0) (V.vector -1 0 0))
         , fuzz3 quatFuzz quatFuzz quatFuzz "Mul associativity" <|
             \p q r ->
                 expectEqualQuat

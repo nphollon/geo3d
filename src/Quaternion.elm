@@ -77,7 +77,7 @@ zRotation angle =
     quaternion (cos (0.5 * angle)) 0 0 (sin (0.5 * angle))
 
 
-{-| Given two vectors, return the quaternion that would rotate the first vector to the second vector. The lengths of the vectors are ignored. If one or both vectors are zero, return the identity quaternion.
+{-| Given two vectors, return a quaternion that would rotate the first vector to the second vector. The lengths of the vectors are ignored. If one or both vectors are zero, return the identity quaternion.
 -}
 rotationFor : Vector -> Vector -> Quaternion
 rotationFor u v =
@@ -91,15 +91,23 @@ rotationFor u v =
         angle =
             atan2 crossMag (Vector.dot u v)
     in
-        if angle == 0 then
-            identity
+        if angle == turns 0.5 then
+            reflect u
         else if crossMag == 0 then
-            Vector.vector 1.0e-10 0 0
-                |> Vector.add v
-                |> rotationFor u
+            identity
         else
             Vector.scale (angle / crossMag) cross
                 |> fromVector
+
+
+reflect : Vector -> Quaternion
+reflect v =
+    if v.x == 0 && v.y == 0 then
+        quaternion 0 1 0 0
+    else
+        { scalar = 0
+        , vector = Vector.cross Vector.zAxis v
+        }
 
 
 {-| Create a quaternion given an axis and angle of rotation. The length of the axis is ignored, but returns Nothing if the axis is the zero vector.
