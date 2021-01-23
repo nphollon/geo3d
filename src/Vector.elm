@@ -243,10 +243,10 @@ toTuple v =
 -}
 encode : Vector -> Value
 encode v =
-    Encode.list
-        [ Encode.float (getX v)
-        , Encode.float (getY v)
-        , Encode.float (getZ v)
+    Encode.list Encode.float
+        [ getX v
+        , getY v
+        , getZ v
         ]
 
 

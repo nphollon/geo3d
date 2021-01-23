@@ -235,8 +235,8 @@ This can make multiplication easier to use along with the pipe operators `|>` an
     compose p q == mul q p
 -}
 compose : Quaternion -> Quaternion -> Quaternion
-compose =
-    flip mul
+compose p q =
+    mul q p
 
 
 {-| The conjugate of a quaternion.
@@ -326,11 +326,11 @@ length =
 -}
 encode : Quaternion -> Value
 encode q =
-    Encode.list
-        [ Encode.float q.scalar
-        , Encode.float (Vector.getX q.vector)
-        , Encode.float (Vector.getY q.vector)
-        , Encode.float (Vector.getZ q.vector)
+    Encode.list Encode.float
+        [ q.scalar
+        , Vector.getX q.vector
+        , Vector.getY q.vector
+        , Vector.getZ q.vector
         ]
 
 
@@ -349,13 +349,15 @@ decode =
 -}
 toMat4 : Quaternion -> Mat4
 toMat4 q =
-    Mat4.makeRotate (angle q) (Vector.toVec3 (axis q))
+    Mat4.makeRotate
+        (angleOfRotation q)
+        (Vector.toVec3 (axisOfRotation q))
 
 
 {-| Get the angle of rotation for a quaternion.
 -}
-angle : Quaternion -> Float
-angle q =
+angleOfRotation : Quaternion -> Float
+angleOfRotation q =
     let
         halfTurn =
             Vector.length q.vector / q.scalar
@@ -373,7 +375,7 @@ angle q =
 
 {-| Get the axis of rotation for a quaternion. Defaults to the x axis if there is no rotation.
 -}
-axis : Quaternion -> Vector
-axis q =
+axisOfRotation : Quaternion -> Vector
+axisOfRotation q =
     Vector.normalize q.vector
         |> Maybe.withDefault (Vector.vector 1 0 0)

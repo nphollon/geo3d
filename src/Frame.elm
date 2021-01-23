@@ -67,8 +67,8 @@ transformOutOf frame point =
 {-| Given a frame B to C, and another frame A to B, return the frame A to C.
 -}
 mul : Frame -> Frame -> Frame
-mul =
-    flip compose
+mul child parent =
+    compose parent child
 
 
 {-| Given a frame A to B, and another frame B to C, return the frame A to C.
